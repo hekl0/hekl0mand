@@ -108,7 +108,6 @@ void WaitForegroundProcess(bool cont) {
             jobStopped(foreground_job);
             break;
         }
-        printf("%d++\n", pid);
     } while (pid > 0);
     
     // Set shell_pgid process to be foreground process
@@ -144,13 +143,13 @@ void startProcess(char** tokens, int infile, int outfile) {
     }
     if (strcmp(tokens[0], "jobs") == 0) {
         ListJobs();
-        Terminate();
+        exit(0);
     } else if (execvp(tokens[0], tokens) == -1) {
         char temp[100];
         sprintf(temp, "Run \"%s\" failed", tokens[0]);
         PrintError(temp, 0);
     }
-    Terminate(1);
+    exit(1);
 }
 
 void StartJob(TokensHolder tokensHolder) {
@@ -172,6 +171,7 @@ void StartJob(TokensHolder tokensHolder) {
             processCount = 0;
 
             // Create pipe and set outfile
+            if (outfile != STDOUT_FILENO) close(outfile);
             if (i != tokensHolder->count) {
                 if (pipe(pip) < 0) {
                     PrintError("pipe", 0);
@@ -199,6 +199,7 @@ void StartJob(TokensHolder tokensHolder) {
             }
 
             // Set infile
+            if (infile != STDIN_FILENO) close(infile);
             if (i != tokensHolder->count)
                 infile = pip[0];
         } else if (strcmp(tokensHolder->tokens[i], "&") == 0 && i == tokensHolder->count-1)
@@ -240,7 +241,7 @@ const char* getStatusName(enum Status stat) {
 void ListJobs() {
     for (int i = 0; i < MAX_NO_JOBS; i++)
         if (jobs[i].stat != Undefined) 
-            printf("[%d]%d\t%s\t\t%s\n", i+1, jobs[i].pid, getStatusName(jobs[i].stat), jobs[i].cmd);
+            printf("[%d]\t%s\t\t%s\n", i+1, getStatusName(jobs[i].stat), jobs[i].cmd);
 }
 
 bool IsJobIDExist(pid_t jobID) {

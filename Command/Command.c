@@ -19,7 +19,8 @@ void ProcessCommand(TokensHolder tokensHolder) {
         return;
     }
     if (strcmp(tokensHolder->tokens[0], "help") == 0) {
-        // Making help function :((
+        // TODO: Making help function :((
+
     } else if (strcmp(tokensHolder->tokens[0], "exit") == 0) {
         if (tokensHolder->count != 1) {
             PrintError("exit", "too many arguements");
