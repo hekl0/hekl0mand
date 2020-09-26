@@ -20,7 +20,21 @@ void ProcessCommand(TokensHolder tokensHolder) {
     }
     if (strcmp(tokensHolder->tokens[0], "help") == 0) {
         // TODO: Making help function :((
-
+        PrintOutput(
+"hekl0mand (made in 2020)\n"
+"\n"
+"Supported command:\n"
+"\t help: The help command will print out help message\n"
+"\t exit: The exit command will terminate the terminal\n"
+"\t cd: The cd command will change the working directory of the shell process\n"
+"\t jobs: The jobs command will print the jobs in the background\n"
+"\t bg: The bg command will move a job into the background. Its format is `bg %id` where id is replaced by the job ID reported by the jobs command\n"
+"\t fg: The fg command will moves a job into the foreground. Its format is `fg %id` where id is replaced by the job ID reported by the jobs command\n"
+"\n"
+"To run outside programs (the program will be run in background if & is included):\n"
+"\t <program1> <arglist1> | <program2> <arglist2> | ... | <programN> <arglistN> [&]\n"
+        );
+        return;
     } else if (strcmp(tokensHolder->tokens[0], "exit") == 0) {
         if (tokensHolder->count != 1) {
             PrintError("exit", "too many arguements");
