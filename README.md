@@ -20,7 +20,7 @@ Note that each set of processes on a command line comprise a job.
 To run outside programs (the program will be run in background if *&* is included):
 - `<program1> <arglist1> | <program2> <arglist2> | ... | <programN> <arglistN> [&]`
 
-### Run 
+### Running instructions 
 
 - Compile: `make shell`
-- Run: `shell`
+- Run: `./shell`
