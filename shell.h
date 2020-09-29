@@ -7,7 +7,7 @@
 #define ANSI_COLOR_BLUE "\x1b[36m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 
-char path[100];
+char path[10000];
 char* username;
 
 void Terminate();

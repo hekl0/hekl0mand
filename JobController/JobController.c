@@ -31,8 +31,10 @@ void Init() {
         jobs[i].pid = -1;
         jobs[i].stat = Undefined;
         jobs[i].cmd[0] = 0;
+        jobs[i].lastProcessInPipeline = 0;
+        jobs[i].returnStatusOfLastProcess = 0;
     }
-    foreground_job = -1;
+    foreground_gpid = -1;
 }
 
 void jobEnded(pid_t pid) {
@@ -41,6 +43,8 @@ void jobEnded(pid_t pid) {
             jobs[i].pid = -1;
             jobs[i].stat = Undefined;
             jobs[i].cmd[0] = 0;
+            jobs[i].lastProcessInPipeline = 0;
+            jobs[i].returnStatusOfLastProcess = 0;
             return;
         }
     PrintError("jobEnded", "Not found job");
@@ -75,7 +79,8 @@ void ZombieKiller() {
                 pid = waitpid(-jobs[i].pid, &child_status, WUNTRACED | WNOHANG);
                 if (pid > 0) {
                     if (WIFEXITED(child_status) || WIFSIGNALED(child_status)) {
-                        // jobEnded(jobs[i].pid);
+                        if (jobs[i].lastProcessInPipeline == pid) 
+                            jobs[i].returnStatusOfLastProcess = WEXITSTATUS(child_status);
                     } else if (WIFSTOPPED(child_status)) {
                         jobStopped(jobs[i].pid);
                         break;
@@ -92,28 +97,40 @@ void ZombieKiller() {
 }
 
 void WaitForegroundProcess(bool cont) {
-    if (foreground_job == -1) return;
+    if (foreground_gpid == -1) return;
+    int jobSLot;
+    for (int i = 0; i < MAX_NO_JOBS; i++)
+        if (jobs[i].pid == foreground_gpid)
+            jobSLot = i;
     int stat;
 
     // Set foreground_pid process to be foreground process
-    tcsetpgrp(STDIN_FILENO, foreground_job);
+    tcsetpgrp(STDIN_FILENO, foreground_gpid);
     if (cont)
-        kill(foreground_job, SIGCONT);
+        kill(foreground_gpid, SIGCONT);
 
     int pid;
     do {
-        pid = waitpid(-foreground_job, &stat, WUNTRACED);
+        pid = waitpid(-foreground_gpid, &stat, WUNTRACED);
 
         if (WIFSTOPPED(stat)) {
-            jobStopped(foreground_job);
+            jobStopped(foreground_gpid);
             break;
+        } else if (WIFEXITED(stat) && jobs[jobSLot].lastProcessInPipeline == pid) {
+            jobs[jobSLot].returnStatusOfLastProcess = WEXITSTATUS(stat);
+        } else if (WIFSIGNALED(stat) && jobs[jobSLot].lastProcessInPipeline == pid) {
+            jobs[jobSLot].returnStatusOfLastProcess = WTERMSIG(stat);
+            char temp[100];
+            sprintf(temp, "Job %d was terminated with code %d", jobSLot+1, jobs[jobSLot].returnStatusOfLastProcess);
+            sprintf(temp, "Job %d was terminated with code %d", jobSLot+1, jobs[jobSLot].returnStatusOfLastProcess);
+            PrintOutput(temp);
         }
     } while (pid > 0);
     
     // Set shell_pgid process to be foreground process
     tcsetpgrp(STDIN_FILENO, shell_pgid);
 
-    foreground_job = -1;
+    foreground_gpid = -1;
 }
 
 int findAvailableSlot() {
@@ -163,7 +180,7 @@ void StartJob(TokensHolder tokensHolder) {
 
     char* processTokens[MAX_INPUT_LENGTH];
     int processCount = 0;
-    pid_t pgid = 0;
+    pid_t pgid = 0, pid;
     int pip[2], infile = STDIN_FILENO, outfile = STDOUT_FILENO;
     for (int i = 0; i < tokensHolder->count+1; i++) 
         if (tokensHolder->tokens[i] == 0 || strcmp(tokensHolder->tokens[i], "|") == 0) {
@@ -182,7 +199,7 @@ void StartJob(TokensHolder tokensHolder) {
                 outfile = STDOUT_FILENO;
 
             // Fork to run process
-            int pid = fork();
+            pid = fork();
             if (pid < 0) {
                 PrintError(tokensHolder->tokens[0], 0);
                 Terminate();
@@ -211,16 +228,16 @@ void StartJob(TokensHolder tokensHolder) {
     // Add to processes list
     jobs[jobSlot].pid = pgid;
     jobs[jobSlot].stat = Running;
+    jobs[jobSlot].lastProcessInPipeline = pid;
     strcpy(jobs[jobSlot].cmd, tokensHolder->tokens[0]);
     for (int i = 1; i < tokensHolder->count; i++)
         if (i != tokensHolder->count-1 || !isBackgroundJob) {
             strcat(jobs[jobSlot].cmd, " ");
             strcat(jobs[jobSlot].cmd, tokensHolder->tokens[i]);
         }
-    
 
     if (!isBackgroundJob) {
-        foreground_job = pgid;
+        foreground_gpid = pgid;
         WaitForegroundProcess(false);
     } else {
         printf("Job ID: %d\n", jobSlot+1);
@@ -253,7 +270,7 @@ void ContinueBackground(pid_t jobID) {
 }
 
 void ContinueForeground(pid_t jobID) {
-    foreground_job = jobs[jobID-1].pid;
+    foreground_gpid = jobs[jobID-1].pid;
     WaitForegroundProcess(true);
 }
 

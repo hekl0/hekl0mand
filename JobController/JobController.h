@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "../CustomIO/CustomIO.h"
 
-#define MAX_NO_JOBS 100
+#define MAX_NO_JOBS 10000
 
 enum Status{Undefined, Running, Stopped};
 
@@ -12,17 +12,20 @@ struct Job {
     pid_t pid;
     enum Status stat;
     char cmd[MAX_INPUT_LENGTH];
+
+    pid_t lastProcessInPipeline;
+    int returnStatusOfLastProcess;
 };
 struct Job jobs[MAX_NO_JOBS];
 
-// PID of the proground process, -1 if there is no foreground process
-int foreground_job;
+// PID of the foreground group process, -1 if there is no foreground group process
+int foreground_gpid;
 
 // Init initialize process controller and redefine signal handler
 void Init();
 // StartProcess starts a process based on the command inputted
 void StartJob(TokensHolder tokensHolder);
-// WaitForegroundProcess block the current process and wait for the foreground_job to finish
+// WaitForegroundProcess block the current process and wait for the foreground_gpid to finish
 void WaitForegroundProcess(bool cont);
 // ListJobs will list all jobs in the background or is stopped
 void ListJobs();

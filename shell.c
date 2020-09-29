@@ -36,7 +36,7 @@ int main (int argc, char ** argv) {
 	while (1) {
         usleep(10000); // Wait for the writer to finish
 		ZombieKiller();
-		getcwd(path, 100);
+		getcwd(path, 10000);
 		username = getUsername();
 		th = ReadCommand(username, path);
 		ProcessCommand(th);

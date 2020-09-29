@@ -3,7 +3,7 @@
 
 #include "../shell.h"
 
-#define MAX_INPUT_LENGTH 100
+#define MAX_INPUT_LENGTH 10000
 
 typedef struct TokensHolder * TokensHolder;
 struct TokensHolder {

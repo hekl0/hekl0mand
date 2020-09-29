@@ -14,7 +14,7 @@ void run_program(TokensHolder tokensHolder);
 
 void ProcessCommand(TokensHolder tokensHolder) {
     if (tokensHolder->count == 0) return;
-    if (tokensHolder->count > 90) {
+    if (tokensHolder->count > MAX_INPUT_LENGTH - 10) {
         PrintError("Error", "Too many args, maybe try fewer?");
         return;
     }
@@ -81,8 +81,8 @@ void cd(char* dest) {
 }
 
 void pwd() {
-    char path[100];
-	getcwd(path, 100);
+    char path[10000];
+	getcwd(path, 10000);
     PrintOutput(path);
 }
 
