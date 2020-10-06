@@ -13,6 +13,9 @@
 void signalHandler(int signo);
 
 pid_t shell_pgid;
+struct Job jobs[MAX_NO_JOBS];
+// PID of the foreground group process, -1 if there is no foreground group process
+int foreground_gpid;
 
 void Init() {
     // Get shell pid

@@ -9,6 +9,9 @@
 
 TokensHolder th;
 
+char path[10000];
+char* username;
+
 void freeTokensHolder() {
 	if (th != NULL)
 		free(th);
@@ -16,7 +19,6 @@ void freeTokensHolder() {
 
 void Terminate() {
 	KillAllJob(); // No orphan process!!!
-	freeTokensHolder(); // No memory leak!!!
 	exit(0);
 }
 
